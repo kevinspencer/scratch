@@ -4,7 +4,7 @@ use POE qw(Wheel::Run);
 use strict;
 use warnings;
 
-my $child_prog = "~/code/scratch/run-me.pl";
+my $child_prog = "/Users/kevin/code/scratch/run-me.sh";
 
 POE::Session->create(
     inline_states => {
@@ -23,7 +23,7 @@ sub do_start {
         CloseEvent  => "handle_child_close"
     );
 
-    $_[KERNEL]->sig_child($child->PID(), "handle_child_close");
+    $_[KERNEL]->sig_child($child->PID(), "handle_child_signal");
 
     $_[HEAP]{children_by_wid}{$child->ID()} = $child;
     $_[HEAP]{children_by_pid}{$child->ID()} = $child;
@@ -32,8 +32,25 @@ sub do_start {
 }
 
 sub handle_child_stderr {
-    my ($line, $wid) = @_[ARG0, ARG1];
+    my ($kernel, $heap, $line, $wid) = @_[KERNEL, HEAP, ARG0, ARG1];
 
-    my $child = $_[HEAP]{children_by_wid}{$wid};
+    my $child = $heap->{children_by_wid}{$wid};
     print "child [" . $child->PID() . "] STDERR: $line\n";
+}
+
+sub handle_child_signal {
+    my ($kernel, $heap, $foo, $pid, $status) = @_[KERNEL, HEAP, ARG0, ARG1, ARG2];
+
+    print "$foo\n$pid\n$status\n";
+    my $child = delete $heap->{children_by_pid}{$pid};
+    return unless defined ($child);
+    delete $heap->{children_by_wid}{$child->ID()};
+}
+
+sub handle_child_close {
+    my ($kernel, $heap, $wid) = @_[KERNEL, HEAP, ARG0];
+    
+    my $child = delete $heap->{children_by_wid}{$wid};
+    print "pid [" . $child->PID() . "] saying cheerio\n";
+    delete $heap->{children_by_pid}{$child->PID()};
 }
