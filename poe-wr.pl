@@ -1,8 +1,11 @@
 #!/usr/bin/env perl
 
+use Data::Dumper;
 use POE qw(Wheel::Run);
 use strict;
 use warnings;
+
+$Data::Dumper::Indent = 1;
 
 my $child_prog = "/Users/kevin/code/scratch/run-me.sh";
 
@@ -12,6 +15,7 @@ POE::Session->create(
         got_child_stdout => \&handle_child_stdout,
         got_child_stderr => \&handle_child_stderr,
         got_child_close  => \&handle_child_close,
+        got_child_signal  => \&handle_child_signal,
     }
 );
 
@@ -26,10 +30,10 @@ sub do_start {
         CloseEvent  => "got_child_close"
     );
 
-    $_[KERNEL]->sig_child($child->PID(), "handle_child_signal");
+    $_[KERNEL]->sig_child($child->PID(), "got_child_signal");
 
     $_[HEAP]{children_by_wid}{$child->ID()} = $child;
-    $_[HEAP]{children_by_pid}{$child->ID()} = $child;
+    $_[HEAP]{children_by_pid}{$child->PID()} = $child;
 
     print "started PID [" . $child->PID() . "] as WID [" . $child->ID() . "]", "\n";
 }
@@ -49,18 +53,24 @@ sub handle_child_stderr {
 }
 
 sub handle_child_signal {
-    my ($kernel, $heap, $foo, $pid, $status) = @_[KERNEL, HEAP, ARG0, ARG1, ARG2];
+    my ($kernel, $heap, $signal, $pid, $status) = @_[KERNEL, HEAP, ARG0, ARG1, ARG2];
 
-    print "$foo\n$pid\n$status\n";
+    print "$signal\n$pid\n$status\n";
     my $child = delete $heap->{children_by_pid}{$pid};
     return unless defined ($child);
     delete $heap->{children_by_wid}{$child->ID()};
+    print Dumper $heap;
 }
 
 sub handle_child_close {
     my ($kernel, $heap, $wid) = @_[KERNEL, HEAP, ARG0];
     
     my $child = delete $heap->{children_by_wid}{$wid};
+    unless (defined $child) {
+        print "wid [$wid] closed all pipes.\n";
+        return;
+    }
     print "pid [" . $child->PID() . "] saying cheerio\n";
     delete $heap->{children_by_pid}{$child->PID()};
+    print Dumper $heap;
 }
