@@ -8,7 +8,8 @@ my $child_prog = "/Users/kevin/code/scratch/run-me.sh";
 
 POE::Session->create(
     inline_states => {
-        _start => \&do_start
+        _start => \&do_start,
+        got_child_stdout => \&handle_child_stdout,
     }
 );
 
@@ -18,7 +19,7 @@ exit();
 sub do_start {
     my $child = POE::Wheel::Run->new(
         Program => [$child_prog],
-        StdoutEvent => "handle_child_stdout",
+        StdoutEvent => "got_child_stdout",
         StderrEvent => "handle_child_stderr",
         CloseEvent  => "handle_child_close"
     );
@@ -29,6 +30,13 @@ sub do_start {
     $_[HEAP]{children_by_pid}{$child->ID()} = $child;
 
     print "started PID [" . $child->PID() . "] as WID [" . $child->ID() . "]", "\n";
+}
+
+sub handle_child_stdout {
+    my ($kernel, $heap, $line, $wid) = @_[KERNEL, HEAP, ARG0, ARG1];
+
+    my $child = $heap->{children_by_wid}{$wid};
+    print "child [" . $child->PID() . "] STDOUT: $line\n";
 }
 
 sub handle_child_stderr {
