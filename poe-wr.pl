@@ -10,6 +10,8 @@ POE::Session->create(
     inline_states => {
         _start => \&do_start,
         got_child_stdout => \&handle_child_stdout,
+        got_child_stderr => \&handle_child_stderr,
+        got_child_close  => \&handle_child_close,
     }
 );
 
@@ -20,8 +22,8 @@ sub do_start {
     my $child = POE::Wheel::Run->new(
         Program => [$child_prog],
         StdoutEvent => "got_child_stdout",
-        StderrEvent => "handle_child_stderr",
-        CloseEvent  => "handle_child_close"
+        StderrEvent => "got_child_stderr",
+        CloseEvent  => "got_child_close"
     );
 
     $_[KERNEL]->sig_child($child->PID(), "handle_child_signal");
