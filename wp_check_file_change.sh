@@ -3,6 +3,8 @@
 # this hack replaces the default /wp-includes/theme-compat/comments.php
 # with my own edited version (clobbered after every WP update)
 #
+# run in cron with /path-to/defaultfile /path-to/myfile args
+#
 
 if [ $# -ne 2 ]; then
     echo "Usage: $0 <source_file> <replacement_file>"
