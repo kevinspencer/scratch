@@ -21,4 +21,5 @@ fi
 
 if find "$source_file" -mmin -60 | grep -q .; then
     mv "$replacement_file" "$source_file"
+    exit 0;
 fi
