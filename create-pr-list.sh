@@ -38,15 +38,8 @@ fi
 # create/empty the output file
 : > "$OUTPUT"
 
-# concatenate: keep header from the first file, skip first line in the rest
-first=1
 for f in "${files[@]}"; do
-  if [ $first -eq 1 ]; then
-    cat "$f" >> "$OUTPUT"
-    first=0
-  else
-    tail -n +2 "$f" >> "$OUTPUT"
-  fi
+  tail -n +2 "$f" >> "$OUTPUT"
 done
 
 # call the parse script
