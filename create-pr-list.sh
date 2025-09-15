@@ -49,16 +49,10 @@ for f in "${files[@]}"; do
   fi
 done
 
-echo "Created '$OUTPUT' with ${#files[@]} files:"
-for f in "${files[@]}"; do
-  printf '  %s\n' "$f"
-done
-
 # call the parse script
 PARSE_SCRIPT="./parse-list-${PREFIX_LOWER}.pl"
 
 if [ -x "$PARSE_SCRIPT" ]; then
-  echo "Running $PARSE_SCRIPT $OUTPUT"
   "$PARSE_SCRIPT" "$OUTPUT"
 else
   echo "Warning: $PARSE_SCRIPT not found or not executable."
